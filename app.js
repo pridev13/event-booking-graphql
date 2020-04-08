@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const graphqlHttp = require('express-graphql');
 const {buildSchema} = require('graphql');
+const mongoose = require('mongoose');
 
 const app = express();
 
@@ -65,5 +66,14 @@ app.get('/', (req, res, next) => {
 	res.send('Hi!');
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT);
+mongoose
+	.connect(
+		`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0-fqjlx.gcp.mongodb.net/test?retryWrites=true&w=majority`
+	)
+	.then(() => {
+		const PORT = process.env.PORT || 3000;
+		app.listen(PORT);
+	})
+	.catch((err) => {
+		console.warn(err);
+	});
