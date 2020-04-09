@@ -6,11 +6,7 @@ const Booking = require('../../models/booking');
 const user = async (uId) => {
 	try {
 		const user = await User.findById(uId);
-		return {
-			...user._doc,
-			password: null,
-			createdEvents: events.bind(this, user._doc.createdEvents),
-		};
+		return formatUser(user);
 	} catch (err) {
 		throw err;
 	}
@@ -21,11 +17,7 @@ const events = async (evIds) => {
 		const results = await Event.find({_id: {$in: evIds}});
 
 		return results.map((ev) => {
-			return {
-				...ev._doc,
-				date: formatDate.bind(this, ev._doc.date),
-				creator: user.bind(this, ev._doc.creator),
-			};
+			return formatEvent(ev);
 		});
 	} catch (err) {
 		throw err;
@@ -35,11 +27,7 @@ const events = async (evIds) => {
 const singleEvent = async (evId) => {
 	try {
 		const event = await Event.findById(evId);
-		return {
-			...event._doc,
-			date: formatDate.bind(this, event._doc.date),
-			creator: user.bind(this, event._doc.creator),
-		};
+		return formatEvent(event);
 	} catch (err) {
 		throw err;
 	}
@@ -49,17 +37,39 @@ const formatDate = (date) => {
 	return new Date(date).toISOString();
 };
 
+const formatUser = (user) => {
+	return {
+		...user._doc,
+		password: null,
+		createdEvents: events.bind(this, user._doc.createdEvents),
+	};
+};
+
+const formatEvent = (event) => {
+	return {
+		...event._doc,
+		date: formatDate.bind(this, event._doc.date),
+		creator: user.bind(this, event._doc.creator),
+	};
+};
+
+const formatBooking = (bk) => {
+	return {
+		...bk._doc,
+		user: user.bind(this, bk._doc.user),
+		event: singleEvent.bind(this, bk._doc.event),
+		createdAt: formatDate.bind(this, bk._doc.createdAt),
+		updatedAt: formatDate.bind(this, bk._doc.updatedAt),
+	};
+};
+
 module.exports = {
 	events: async () => {
 		try {
 			const events = await Event.find();
 
 			return events.map((ev) => {
-				return {
-					...ev._doc,
-					date: formatDate.bind(this, ev._doc.date),
-					creator: user.bind(this, ev._doc.creator),
-				};
+				return formatEvent(ev);
 			});
 		} catch (err) {
 			throw err;
@@ -69,13 +79,7 @@ module.exports = {
 		try {
 			const bookings = await Booking.find();
 			return bookings.map((bk) => {
-				return {
-					...bk._doc,
-					user: user.bind(this, bk._doc.user),
-					event: singleEvent.bind(this, bk._doc.event),
-					createdAt: formatDate.bind(this, bk._doc.createdAt),
-					updatedAt: formatDate.bind(this, bk._doc.updatedAt),
-				};
+				return formatBooking(bk);
 			});
 		} catch (err) {
 			throw err;
@@ -98,11 +102,7 @@ module.exports = {
 			}
 			creator.createdEvents.push(event);
 			await creator.save();
-			return {
-				...createdEvent._doc,
-				date: formatDate.bind(this, createdEvent._doc.date),
-				creator: user.bind(this, createdEvent._doc.creator),
-			};
+			return formatEvent(createdEvent);
 		} catch (err) {
 			throw err;
 		}
@@ -121,7 +121,7 @@ module.exports = {
 			});
 
 			const res = await user.save();
-			return {...res._doc, password: null};
+			return formatUser(res);
 		} catch (err) {
 			throw err;
 		}
@@ -139,13 +139,7 @@ module.exports = {
 			});
 
 			const result = await booking.save();
-			return {
-				...result._doc,
-				user: user.bind(this, result._doc.user),
-				event: singleEvent.bind(this, result._doc.event),
-				createdAt: formatDate.bind(this, result._doc.createdAt),
-				updatedAt: formatDate.bind(this, result._doc.updatedAt),
-			};
+			return formatBooking(result);
 		} catch (err) {
 			throw err;
 		}
@@ -157,17 +151,12 @@ module.exports = {
 			if (!booking) {
 				throw new Error('Booking not found');
 			}
-			
-			const event = {
-				...booking.event._doc,
-				creator: user.bind(this, booking.event._doc.creator),
-				date: formatDate.bind(this, booking.event._doc.date),
-			};
+
+			const event = formatEvent(booking.event);
 
 			await Booking.deleteOne({_id: args.bookingId});
 
 			return event;
-
 		} catch (err) {
 			throw err;
 		}
