@@ -14,18 +14,22 @@ module.exports = {
 			throw err;
 		}
 	},
-	createEvent: async (args) => {
+	createEvent: async (args, req) => {
+		if (!req.isAuth) {
+			throw new Error('Please log in');
+		}
+
 		const event = new Event({
 			title: args.eventInput.title,
 			description: args.eventInput.description,
 			price: +args.eventInput.price,
 			date: new Date(args.eventInput.date),
-			creator: '5e8dc157ba78660aba022698',
+			creator: req.userId,
 		});
 
 		try {
 			const createdEvent = await event.save();
-			const creator = await User.findById('5e8dc157ba78660aba022698');
+			const creator = await User.findById(req.userId);
 			if (!creator) {
 				throw new Error('User not found');
 			}

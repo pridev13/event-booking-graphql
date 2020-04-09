@@ -37,9 +37,16 @@ module.exports = buildSchema(`
     password: String!
   }
 
+  type AuthData {
+    userId: ID!
+    token: String!
+    tokenExp: Int!
+  }
+
   type RootQuery {
     events: [Event!]!
     bookings: [Booking!]!
+    login(email: String!, password: String!): AuthData!
   }
 
   type RootMutation {
