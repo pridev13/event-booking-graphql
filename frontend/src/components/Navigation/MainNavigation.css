@@ -24,20 +24,30 @@
   list-style: none;
   margin: 0px;
   padding: 0px;
+  align-items: center;
 }
 
 .main-navigation__items ul li {
   margin: 0 1rem;
 }
 
-.main-navigation__items ul li a {
+.main-navigation__items ul li a,
+.main-navigation__items ul li button {
   text-decoration: none;
   color: #000;
   outline: none;
+  border: none;
+  font: inherit;
+  background: transparent;
+  cursor: pointer;
+  margin: 0px;
+  padding: 0px;
 }
 
 .main-navigation__items ul li a.active,
 .main-navigation__items ul li a:hover,
-.main-navigation__items ul li a:active {
+.main-navigation__items ul li a:active,
+.main-navigation__items ul li button:hover,
+.main-navigation__items ul li button:active {
   color: #f8e264;
 }
