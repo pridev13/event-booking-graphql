@@ -152,7 +152,49 @@ class EventsPage extends Component {
 			});
 	};
 
-	bookEventHandler = () => {};
+	bookEventHandler = () => {
+
+		if(!this.context.token) {
+			this.setState({selectedEvent: null});
+			return;
+		}
+
+		const reqBody = {
+			query: `
+				mutation {
+					bookEvent(eventId: "${this.state.selectedEvent._id}") {
+						_id
+						createdAt
+						updatedAt
+					}
+				}
+				`,
+		};
+
+		fetch('http://localhost:5000/graphql', {
+			method: 'POST',
+			body: JSON.stringify(reqBody),
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: 'Bearer ' + this.context.token,
+			},
+		})
+			.then((res) => {
+				if (res.status !== 200 && res.status !== 201) {
+					throw new Error('Failed with status ' + res.status);
+				}
+				return res.json();
+			})
+			.then((data) => {
+				console.log(data);
+				this.setState({selectedEvent: null});
+
+			})
+			.catch((err) => {
+				console.log(err);
+			});
+
+	};
 
 	showDetailHandler = (evId) => {
 		this.setState((prevState) => {
@@ -226,7 +268,7 @@ class EventsPage extends Component {
 							onConfirm={this.bookEventHandler}
 							confirmText="Book"
 							canCancel
-							canConfirm
+							canConfirm={this.context.token !== null}
 						>
 							<h2>
 								${this.state.selectedEvent.price} -{' '}
