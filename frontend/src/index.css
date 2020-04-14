@@ -12,8 +12,10 @@ body {
   margin-bottom: 0.5rem;
 }
 
-.form-control label, .form-control input {
-  width: 100%;
+.form-control label,
+.form-control input,
+.form-control textarea {
+  width: 90%;
   display: block;
 }
 
