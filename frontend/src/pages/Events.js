@@ -15,6 +15,8 @@ class EventsPage extends Component {
 		selectedEvent: null,
 	};
 
+	isActive = true;
+
 	constructor(props) {
 		super(props);
 		this.titleElRef = React.createRef();
@@ -27,6 +29,10 @@ class EventsPage extends Component {
 
 	componentDidMount() {
 		this.fetchEvents();
+	}
+
+	componentWillUnmount() {
+		this.isActive = false;
 	}
 
 	startCreateEventHandler = () => {
@@ -144,17 +150,20 @@ class EventsPage extends Component {
 			.then((data) => {
 				console.log(data);
 				const events = data.data.events;
-				this.setState({events: events, isLoading: false});
+				if (this.isActive) {
+					this.setState({events: events, isLoading: false});
+				}
 			})
 			.catch((err) => {
 				console.log(err);
-				this.setState({isLoading: false});
+				if (this.isActive) {
+					this.setState({isLoading: false});
+				}
 			});
 	};
 
 	bookEventHandler = () => {
-
-		if(!this.context.token) {
+		if (!this.context.token) {
 			this.setState({selectedEvent: null});
 			return;
 		}
@@ -188,12 +197,10 @@ class EventsPage extends Component {
 			.then((data) => {
 				console.log(data);
 				this.setState({selectedEvent: null});
-
 			})
 			.catch((err) => {
 				console.log(err);
 			});
-
 	};
 
 	showDetailHandler = (evId) => {
