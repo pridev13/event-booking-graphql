@@ -2,6 +2,8 @@ import React, {Component} from 'react';
 import AuthContext from '../context/auth-context';
 import Modal from '../components/Modal/Modal';
 import Backdrop from '../components/Backdrop/Backdrop';
+import EventList from '../components/Events/EventList';
+import Spinner from '../components/Spinner/Spinner';
 
 import './Events.css';
 
@@ -9,6 +11,8 @@ class EventsPage extends Component {
 	state = {
 		creating: false,
 		events: [],
+		isLoading: false,
+		selectedEvent: null,
 	};
 
 	constructor(props) {
@@ -57,10 +61,6 @@ class EventsPage extends Component {
 						description
 						date
 						price
-						creator {
-							_id
-							email
-						}
 					}
 				}
 				`,
@@ -82,7 +82,21 @@ class EventsPage extends Component {
 			})
 			.then((data) => {
 				console.log(data);
-				this.fetchEvents();
+
+				this.setState((prevState) => {
+					const updEvents = [...prevState.events];
+					updEvents.push({
+						_id: data.data.createEvent._id,
+						title: data.data.createEvent.title,
+						description: data.data.createEvent.description,
+						date: data.data.createEvent.date,
+						price: data.data.createEvent.price,
+						creator: {
+							_id: this.context.userId,
+						},
+					});
+					return {events: updEvents};
+				});
 			})
 			.catch((err) => {
 				console.log(err);
@@ -90,10 +104,12 @@ class EventsPage extends Component {
 	};
 
 	modalCancelHandler = () => {
-		this.setState({creating: false});
+		this.setState({creating: false, selectedEvent: null});
 	};
 
 	fetchEvents = () => {
+		this.setState({isLoading: true});
+
 		const reqBody = {
 			query: `
 				query {
@@ -128,22 +144,24 @@ class EventsPage extends Component {
 			.then((data) => {
 				console.log(data);
 				const events = data.data.events;
-				this.setState({events: events});
+				this.setState({events: events, isLoading: false});
 			})
 			.catch((err) => {
 				console.log(err);
+				this.setState({isLoading: false});
 			});
 	};
 
-	render() {
-		const eventList = this.state.events.map((ev) => {
-			return (
-				<li key={ev._id} className="events__list-item">
-					{ev.title}
-				</li>
-			);
-		});
+	bookEventHandler = () => {};
 
+	showDetailHandler = (evId) => {
+		this.setState((prevState) => {
+			const selectedEvent = prevState.events.find((e) => e._id === evId);
+			return {selectedEvent: selectedEvent};
+		});
+	};
+
+	render() {
 		return (
 			<React.Fragment>
 				{this.state.creating && (
@@ -153,6 +171,7 @@ class EventsPage extends Component {
 							title="Add event"
 							onCancel={this.modalCancelHandler}
 							onConfirm={this.modalConfirmHandler}
+							confirmText="Confirm"
 							canCancel
 							canConfirm
 						>
@@ -198,6 +217,28 @@ class EventsPage extends Component {
 					</React.Fragment>
 				)}
 
+				{this.state.selectedEvent && (
+					<React.Fragment>
+						<Backdrop />
+						<Modal
+							title={this.state.selectedEvent.title}
+							onCancel={this.modalCancelHandler}
+							onConfirm={this.bookEventHandler}
+							confirmText="Book"
+							canCancel
+							canConfirm
+						>
+							<h2>
+								${this.state.selectedEvent.price} -{' '}
+								{new Date(this.state.selectedEvent.date).toLocaleDateString(
+									'nl-NL'
+								)}
+							</h2>
+							<p>{this.state.selectedEvent.description}</p>
+						</Modal>
+					</React.Fragment>
+				)}
+
 				{this.context.token && (
 					<div className="events-control">
 						<p>Create our own event</p>
@@ -206,7 +247,16 @@ class EventsPage extends Component {
 						</button>
 					</div>
 				)}
-				<ul className="events__list">{eventList}</ul>
+
+				{this.state.isLoading ? (
+					<Spinner />
+				) : (
+					<EventList
+						events={this.state.events}
+						authUserId={this.context.userId}
+						onViewDetail={this.showDetailHandler}
+					/>
+				)}
 			</React.Fragment>
 		);
 	}
