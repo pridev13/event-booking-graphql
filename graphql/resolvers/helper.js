@@ -1,9 +1,19 @@
+const DataLoader = require('dataloader');
+
 const User = require('../../models/user');
 const Event = require('../../models/event');
 
+const eventLoader = new DataLoader((eventIds) => {
+	return events(eventIds);
+});
+
+const userLoader = new DataLoader((uIds) => {
+	return User.find({_id: {$in: uIds}});
+});
+
 const user = async (uId) => {
 	try {
-		const user = await User.findById(uId);
+		const user = await userLoader.load(uId.toString());
 		return formatUser(user);
 	} catch (err) {
 		throw err;
@@ -24,8 +34,8 @@ const events = async (evIds) => {
 
 const singleEvent = async (evId) => {
 	try {
-		const event = await Event.findById(evId);
-		return formatEvent(event);
+		const event = await eventLoader.load(evId.toString());
+		return event;
 	} catch (err) {
 		throw err;
 	}
@@ -47,7 +57,7 @@ const formatUser = (user) => {
 	return {
 		...user._doc,
 		password: null,
-		createdEvents: events.bind(this, user._doc.createdEvents),
+		createdEvents: () => eventLoader.loadMany(user._doc.createdEvents),
 	};
 };
 
