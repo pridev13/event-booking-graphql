@@ -23,6 +23,9 @@ const user = async (uId) => {
 const events = async (evIds) => {
 	try {
 		const results = await Event.find({_id: {$in: evIds}});
+		results.sort((a, b) => {
+			return evIds.indexOf(a._id.toString()) - evIds.indexOf(b._id.toString());
+		});
 
 		return results.map((ev) => {
 			return formatEvent(ev);
