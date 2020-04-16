@@ -1,12 +1,15 @@
 import React, {Component} from 'react';
 import AuthContext from '../context/auth-context';
 import BookingList from '../components/Bookings/BookingList';
+import BookingsChart from '../components/Bookings/BookingsChart';
+import BookingsControl from '../components/Bookings/BookingsControls';
 import Spinner from '../components/Spinner/Spinner';
 
 class BookingsPage extends Component {
 	state = {
 		isLoading: false,
 		bookings: [],
+		type: 'list',
 	};
 
 	static contextType = AuthContext;
@@ -28,6 +31,7 @@ class BookingsPage extends Component {
 							_id
 							title
 							date
+							price
 						}
 					}
 				}
@@ -72,8 +76,8 @@ class BookingsPage extends Component {
 				}
 				`,
 			variables: {
-				id: bkId
-			}
+				id: bkId,
+			},
 		};
 
 		fetch('http://localhost:5000/graphql', {
@@ -107,19 +111,35 @@ class BookingsPage extends Component {
 			});
 	};
 
+	switchHandler = (type) => {
+		if (type !== this.state.type) {
+			this.setState({type: type});
+		}
+	};
+
 	render() {
-		return (
-			<React.Fragment>
-				{this.state.isLoading ? (
-					<Spinner />
-				) : (
-					<BookingList
-						bookings={this.state.bookings}
-						onDelete={this.deleteBookingHandler}
+		let content = <Spinner />;
+		if (!this.state.isLoading) {
+			content = (
+				<React.Fragment>
+					<BookingsControl
+						activeType={this.state.type}
+						onSwitch={this.switchHandler}
 					/>
-				)}
-			</React.Fragment>
-		);
+					<div>
+						{this.state.type === 'list' ? (
+							<BookingList
+								bookings={this.state.bookings}
+								onDelete={this.deleteBookingHandler}
+							/>
+						) : (
+							<BookingsChart bookings={this.state.bookings} />
+						)}
+					</div>
+				</React.Fragment>
+			);
+		}
+		return <React.Fragment>{content}</React.Fragment>;
 	}
 }
 
